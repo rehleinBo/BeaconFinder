@@ -95,22 +95,30 @@ void processResponseAndPublish(String content) {
   */
   int index = 0;
   int loopies = 0;
+  String beacons = "[";
   while(index > -1) {
     loopies++;
     index = content.indexOf("+DISC:", index);
     if (index < 0) {
-      return;
+      break;
     }
     String signalStrength = content.substring(index + 72, index + 76);
     String mac = content.substring(index + 59, index + 71);
-
-    Particle.publish("BEACON-FOUND", "{mac:\"" + mac + "\" signal:\"" + signalStrength + "\"}", 60, PRIVATE);
+    if (beacons.length() > 1) {
+      beacons.concat(", ");
+    }
+    beacons.concat("{\"mac\":\"" + mac + "\", \"signal\":\"" + signalStrength + "\"}");
     Particle.process();
 
     if (loopies > 20) {
-      return;
+      index = -1;
+      break;
     }
     index = index + 4;
+  }
+  if (beacons.length() > 1) {
+    beacons.concat("]");
+      Particle.publish("BEACONS-FOUND", beacons, 60, PRIVATE);
   }
 }
 
